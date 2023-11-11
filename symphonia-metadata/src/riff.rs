@@ -60,10 +60,11 @@ lazy_static! {
 pub fn parse(tag: [u8; 4], buf: &[u8]) -> Tag {
     // TODO: Key should be checked that it only contains ASCII characters.
     let key = String::from_utf8_lossy(&tag);
-    let value = String::from_utf8_lossy(buf);
+    let (cow, _, had_errors) = encoding_rs::UTF_8.decode(buf);
+    let value: Value = if had_errors { Value::Binary(Box::from(buf)) } else { Value::from(cow) };
 
     // Attempt to assign a standardized tag key.
     let std_tag = RIFF_INFO_MAP.get(key.to_lowercase().as_str()).copied();
 
-    Tag::new(std_tag, &key, Value::from(value))
+    Tag::new(std_tag, &key, value)
 }
